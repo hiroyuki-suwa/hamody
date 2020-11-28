@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>- hamody -</title>
+<link rel="shortcut icon" type="image/vnd.microsoft.icon" href="favicon.ico" />
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+<script src="https://code.jquery.com/jquery-3.3.1.js"></script>
+
+<style>
+body {
+  margin: 0;
+  background: #444;
+}
+
+* {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: #eee;
+}
+
+.container {
+  position: relative;
+  width: 320px;
+  margin: 0 auto 80px;
+  padding: 0 0 120px;
+  background: linear-gradient(to right, #222, #333);
+  box-shadow: 0 0 8px 0 rgba(0,0,0,.8);
+}
+
+.container .title {
+  display: inline-block;
+  margin: 4px 16px 16px;
+  font-weight: 200;
+  font-size: 36px;
+  letter-spacing: 2px;
+  color: #888;
+}
+
+.sustain {
+  position: absolute;
+  top: 4px;
+  right: 20px;
+  padding: 0;
+  border: none;
+  text-align: right;
+}
+.sustain legend {
+  margin-right: -2px;
+  margin-bottom: 4px;
+  color: #aaa;
+  font-size: 12px;
+}
+.sustain label span {
+  color: #aaa;
+  font-size: 14px;
+}
+
+.keys {
+  width: 220px;
+  margin: 0 8px 0 76px;
+  background: #222;
+  border-left: solid 6px #812;
+}
+
+.key {
+  position: relative;
+  cursor: pointer;
+  display: block;
+  border: none;
+}
+.key:focus {
+  outline: 0;
+}
+
+.key.white {
+  color: #555;
+  width: 220px;
+  height: 40px;
+  margin: -13px 0;
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+  border-left: solid 1px #dcb;
+  box-shadow: 0 0 2px 0 rgba(17,17,17,.95) inset;
+  z-index: 1;
+}
+.key.white.e, .key.white.h { margin-top: 0; }
+.key.white.f, .key.white.c { margin-bottom: 0; }
+.key.white              { background: #f8f0e8; }
+.key.white:hover        { background: #bcd; }
+.key.white.active       { background: #e94; }
+.key.white.active:hover { background: #abc; }
+
+.key.black {
+  color: #eee;
+  width: 140px;
+  height: 26px;
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+  border-top:    solid  4px #aaa;
+  border-right:  solid 12px #222;
+  border-bottom: solid  4px #333;
+  border-left:   solid  1px #222;
+  z-index: 2;
+  box-shadow: 0 0 2px 0 rgba(255,255,255,.5) inset;
+}
+.key.black.c_sharp, .key.black.f_sharp { transform: translate(0, 4px); }
+.key.black.d_sharp, .key.black.a_sharp { transform: translate(0, -4px); }
+.key.black              { background: linear-gradient(to right, #222, #444); }
+.key.black:hover        { background: #567; }
+.key.black.active       { background: #e94; }
+.key.black.active:hover { background: #456; }
+
+.key .indicator {
+  position: absolute;
+  left: -64px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-block;
+  width: 30px;
+  padding: 0 4px;
+  font-family: Consolas, 'Courier New', Courier, monospace;
+  font-size: 10px;
+  font-weight: bold;
+  background: #aa9;
+  color: #222;
+  text-align: right;
+  box-shadow: 0 4px 4px -2px rgba(0,0,0,.5) inset;
+  transition: .2s ease-out;
+}
+.key.active .indicator {
+  background: #e94;
+  color: #642;
+}
+.key.e .indicator, .key.h .indicator {
+  transform: translateY(-16px);
+}
+.key.f .indicator, .key.c .indicator {
+  transform: translate(0,0);
+}
+
+.version {
+  position: absolute;
+  margin: 0;
+  bottom: 100px;
+  right: 20px;
+  z-index: 99;
+}
+.version small {
+  font-size: 12px;
+  color: #666;
+}
+
+.mute {
+  position: fixed;
+  bottom: 120px;
+  left: 50%;
+  transform: translate(-50%,0);
+  padding: 16px 0;
+  width: 300px;
+  font-size: 20px;
+  text-align: center;
+  color: #eee;
+  background: rgba(0,0,0,.6);
+  border: solid 1px #eee;
+  cursor: pointer;
+  border-radius: 32px;
+  z-index: 999;
+}
+.mute:hover {
+  background: rgba(0,0,0,.8);
+}
+.mute:focus {
+  outline: 0;
+}
+
+.footer {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  min-height: 60px;
+  padding: 16px 0 32px;
+  background: #555;
+  color: #eee;
+  text-align: center;
+  box-shadow: 0 4px 4px -2px rgba(0,0,0,.5) inset;
+  z-index: 99;
+}
+.footer-container {
+  display: flexbox;
+}
+.footer .label {
+  display: inline-block;
+  margin: 8px 12px;
+}
+.footer .label.a {
+  text-align: right;
+}
+select#temperament, select#inkey, input#tuningA, select#tone {
+  font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', 'Segoe UI', Geneva, Verdana, sans-serif;
+  font-size: 20px;
+  font-weight: bold;
+  background: #e94;
+  color: #642;
+  padding: 2px;
+  border: none;
+  box-shadow: 0 4px 4px -2px rgba(0,0,0,.5) inset;
+}
+select#temperament option {
+  text-align: center;
+}
+select#inkey:disabled {
+  background: #765;
+}
+input#tuningA {
+  text-align: right;
+  width: 72px;
+}
+select#tone {
+  font-size: 16px;
+}
+
+.language-settings {
+  position: absolute;
+  bottom: -8px;
+  right: 8px;
+}
+.language-settings .open-modal-language {
+  cursor: pointer;
+}
+
+.copyright {
+  position: fixed;
+  margin: 0;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 99;
+}
+.copyright small {
+  font-size: 12px;
+  color: #777;
+}
+
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
+  background: rgba(34,34,34,0.95);
+  border: solid 1px #aaa;
+  z-index: 9999;
+}
+
+.modal-language {
+  display: none;
+  padding: 60px 20px;
+  width: 100vw;
+  height: 100vh;
+}
+.modal-language .modal-container {
+  position: absolute;
+  width: 100%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
+  text-align: center;
+}
+.modal-language h2 {
+  width: calc(100%-60px);
+  padding: 0 12px;
+  color: #aaa;
+  font-size: 32px;
+  font-weight: 200;
+}
+.modal-language h2 small {
+  color: #aaa;
+  font-size: 16px;
+}
+.modal-language div {
+  margin: 40px 0;
+  text-align: center;
+}
+.modal-language #language {
+  padding: 0 16px;
+  color: #222;
+  background-color: #ccc;
+  font-size: 24px;
+  font-weight: bold;
+}
+.modal-language .set-language {
+  cursor: pointer;
+  padding: 8px 48px;
+  width: 240px;
+  height: 60px;
+  color: #ccc;
+  background: #222;
+  font-size: 24px;
+  border: solid 1px #ccc;
+  border-radius: 30px;
+  transition: .3s ease-out;
+}
+.modal-language .set-language:hover {
+  background: #111;
+}
+.modal-language .set-language:focus {
+  outline: 0;
+}
+
+@media (min-width: 960px) {
+  body {
+    background: #cba;
+  }
+  .container {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%,-58%) rotate(90deg);
+    margin: 0 auto 80px;
+    padding: 0 0 60px;
+    border-radius: 12px;
+  }
+  .mute {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 1024px;
+    height: 80px;
+    border-radius: 40px;
+    transform: translate(-50%, calc(-58% + 150px));
+    font-size: 40px;
+    font-weight: 100;
+  }
+  .footer {
+    min-height: 120px;
+  }
+  select#temperament, select#inkey, input#tuningA {
+    font-size: 30px;
+  }
+  input#tuningA {
+    width: 108px;
+  }
+  select#tone {
+    font-size: 24px;
+  }
+  .version {
+    bottom: 40px;
+  }
+  .copyright {
+    bottom: 20px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .container {
+    transform: translate(-50%,-58%) rotate(90deg) scale(1.25);
+  }
+}
+
+</style>
+</head>
+
+<body>
+  <div class="container">
+    <h1 class="title">hamody</h1>
+    <fieldset class="sustain">
+      <legend>SUSTAIN MODE:</legend>
+      <label class="on">
+        <span>multiple</span>
+        <input type="radio" name="sustain" value="on" checked>
+      </label>
+      <label class="off">
+        <input type="radio" name="sustain" value="off">
+        <span>single</span>
+      </label>
+    </fieldset>
+    <div id="keys" class="keys"></div>
+    <p class="version"><small>version X</small></p>
+  </div>
+  <button type="button" class="mute" hidden>mute all</button>
+  <footer class="footer">
+    <div class="footer-container">
+      <span>
+        <select id="temperament" name="temperament">
+          <option value="equal" selected>Equal</option>
+          <option value="pure">Pure</option>
+          <option value="meantone">Meantone</option>
+          <option value="Pythagorean">Pythagorean</option>
+        </select>
+        <label id="inkey-label" class="label inkey">
+          <span>in</span>
+          <select id="inkey" name="inkey" disabled>
+            <option value="6">F#/Gb</option>
+            <option value="5">F</option>
+            <option value="4">E</option>
+            <option value="3">Eb</option>
+            <option value="2">D</option>
+            <option value="1">Db</option>
+            <option value="0" selected>C</option>
+            <option value="11">B</option>
+            <option value="10">Bb</option>
+            <option value="9">A</option>
+            <option value="8">Ab</option>
+            <option value="7">G</option>
+            <option value="6">F#/Gb</option>
+          </select>
+        </label>
+      </span>
+      <label class="label a">
+        <span>A =</span>
+        <input type="number" id="tuningA" value="442" min="110" max="1760">
+        <span>Hz</span>
+      </label>
+      <label class="label tone">
+        <span>TONE:</span>
+        <select id="tone" name="tone">
+          <option value="sine">Sine</option>
+          <option value="triangle" selected>Triangle</option>
+          <option value="square">Square</option>
+          <option value="sawtooth">Sawtooth</option>
+        </select>
+      </label>
+    </div>
+    <p class="language-settings">
+      <a class="open-modal-language material-icons">language</a>
+    </p>
+    <p class="copyright">
+      <small>&copy;2020 SUWAHIROYUKI</small>
+    </p>
+  </footer>
+  <div class="modal modal-language">
+    <div class="modal-container">
+      <h2>Select your language.<br>
+      <small>言語を選択してください</small></h2>
+      <div>
+        <select id="language"></select>  
+      </div>
+      <div>
+        <button class="set-language">Get Started</button>
+      </div>
+    </div>
+  </div>
+<script>
+const octaves = 3; // Keyboard size (in octave).
+const offsetToTuningNote = 9 + Math.floor(octaves/2) * 12; // Number of keys between lowest note and tuning A.
+const chromaticInterval = 1.0594630943592952645618252949463417007792043174941856285592084314; // 2^(1/12).
+const notesInOctave = ['c', 'c_sharp', 'd', 'd_sharp', 'e', 'f', 'f_sharp', 'g', 'g_sharp', 'a', 'a_sharp', 'h'];
+const centList = () => {
+  const temperament = $('#temperament').val();
+  switch (temperament) {
+    case 'pure':
+      return [0, +11.7, +3.9, +15.6, -13.7, -2.0, -9.8, +2.0, +13.7, -15.6, +17.9, -11.7];
+    case 'meantone':
+      return [0, +17.108, -6.843, +10.265, -13.686, +3.422, -20.529, -3.422, +13.686, +10.265, +6.843, -17.108];
+    case 'Pythagorean':
+      return [0, -9.775, +3.910, -5.865, +7.820, -1.955, -11.730, +1.955, -7.820, +5.865, -3.910, +9.775];
+    default:
+      return new Array(12).fill(0);
+  }
+};
+const en = {
+  sustain: 'SUSTAIN MODE:',
+  sustains: {
+    on: 'multiple',
+    off: 'single',
+  },
+  temperaments: {
+    equal: 'Equal',
+    pure: 'Pure',
+    meantone: 'Meantone',
+    Pythagorean: 'Pythagorean',
+  },
+  tone: 'TONE:',
+  tones: {
+    sine: 'Sine',
+    triangle: 'Triangle',
+    square: 'Square',
+    sawtooth: 'Sawtooth',
+  }
+};
+const ja = {
+  sustain: '音の保持:',
+  sustains: {
+    on: '和音',
+    off: '単音',
+  },
+  temperaments: {
+    equal: '平均律',
+    pure: '純正律',
+    meantone: '中全音律',
+    Pythagorean: 'ピタゴラス音律',
+  },
+  tone: '音色',
+  tones: {
+    sine: '正弦波',
+    triangle: '三角波',
+    square: '矩形波',
+    sawtooth: '鋸歯状波',
+  }
+};
+const en_keys = {
+  '0': 'C',
+  '1': 'Db',
+  '2': 'D',
+  '3': 'Eb',
+  '4': 'E',
+  '5': 'F',
+  '6': 'F#/Gb',
+  '7': 'G',
+  '8': 'Ab',
+  '9': 'A',
+  '10': 'Bb',
+  '11': 'B',
+};
+const de_keys = {
+  '0': 'C',
+  '1': 'Des',
+  '2': 'D',
+  '3': 'Es',
+  '4': 'E',
+  '5': 'F',
+  '6': 'Fis/Ges',
+  '7': 'G',
+  '8': 'As',
+  '9': 'A',
+  '10': 'B',
+  '11': 'H',
+};
+const jp_keys = {
+  '0': 'ド',
+  '1': 'レ♭',
+  '2': 'レ',
+  '3': 'ミ♭',
+  '4': 'ミ',
+  '5': 'ファ',
+  '6': 'ファ♯/ソ♭',
+  '7': 'ソ',
+  '8': 'ラ♭',
+  '9': 'ラ',
+  '10': 'シ♭',
+  '11': 'シ',
+};
+const languages = {
+  en: {
+    ...en,
+    keys: en_keys,
+    name: 'English'
+  },
+  ja_de: {
+    ...ja,
+    keys: de_keys,
+    name: '日本語（ドイツ音名）'
+  },
+  ja_en: {
+    ...ja,
+    keys: en_keys,
+    name: '日本語（英語音名）'
+  },
+  ja_jp: {
+    ...ja,
+    keys: jp_keys,
+    name: '日本語（ドレミ表記）'
+  }
+};
+const default_lang = 'en';
+const getStoredLanguage = () => localStorage.getItem('language');
+const getLanguage = () => $('#language').val() || default_lang;
+const getTexts = language => languages[language || getLanguage()];
+const getTuningA = () => parseFloat($('#tuningA').val()) || 442;
+const getKey = () => parseInt($('#inkey').val()) || 0;
+const getTone = () => $('#tone').val() || 'triangle';
+const getCent = index => centList()[(index - getKey() + 12) % 12] || 0;
+const isSustainOn = () => $('input[name=sustain]:checked').val() === 'on';
+
+let isLanguageSet = !!getStoredLanguage();
+
+let notes = (new Array(12 * octaves + 1))
+  .fill()
+  .map((_, index) => {
+    const key = notesInOctave[index % 12];
+    const relativeFrequency = chromaticInterval ** (index - offsetToTuningNote);
+    return { index, key, relativeFrequency, oscillator: undefined };
+  });
+
+const createOscillator = (frequency, cent = 0) => {
+  const context = new (window.AudioContext || window.webkitAudioContext);
+  const oscillator = context.createOscillator();
+  const gain = context.createGain();
+  oscillator.start = oscillator.start || oscillator.noteOn;
+  oscillator.stop  = oscillator.stop  || oscillator.noteOff;
+  oscillator.type = getTone();
+  oscillator.connect(gain);
+  gain.connect(context.destination);
+  oscillator.frequency.value = frequency;
+  oscillator.detune.value = cent;
+  return oscillator;
+};
+
+const createOscillatorFor = index => {
+  const frequency = getTuningA() * notes[index].relativeFrequency;
+  const cent = getCent(index);
+  return createOscillator(frequency, cent);
+};
+
+const updateOscillator = (oscillator, frequency, cent) => {
+  if (!oscillator) return createOscillator(frequency, cent);
+  oscillator.type = getTone();
+  oscillator.frequency.value = frequency;
+  oscillator.detune.value = cent;
+  return oscillator;
+};
+
+const updateOscillatorFor = (oscillator, index) => {
+  const frequency = getTuningA() * notes[index].relativeFrequency;
+  const cent = getCent(index);
+  return updateOscillator(oscillator, frequency, cent);
+};
+
+const refreshSounds = () => {
+  notes = notes.map((note, index) => {
+    if (note.oscillator) {
+      note.oscillator = updateOscillatorFor(note.oscillator, index);
+    }
+    return note;
+  });
+};
+
+const refreshIndicators = () => {
+  const inkey = parseInt($('#inkey').val());
+  $('.key').each(function() {
+    const index = parseInt($(this).data('index'));
+    const cent = getCent(index);
+    const value = (cent > 0 ? '+' : '') + cent.toFixed(1);
+    $(this).find('.indicator').text(value);
+  });
+};
+
+const mute = index => {
+  const oscillator = notes[index].oscillator;
+  if (!oscillator) return;
+  oscillator.stop();
+  notes[index].oscillator = undefined;
+
+  $('.key').each(function() {
+    if (parseInt($(this).data('index')) === index)
+      $(this).removeClass('active');
+  });
+};
+
+const dispatch = index => {
+  mute(index);
+  const oscillator = createOscillatorFor(index);
+  notes[index].oscillator = oscillator;
+  oscillator.start();
+  $('.key').each(function() {
+    if (parseInt($(this).data('index')) === index)
+      $(this).addClass('active');
+  });
+  $('.mute').removeAttr('hidden');
+};
+
+const muteAll = () => {
+  notes.forEach((_, index) => {
+    mute(index);
+  });
+  $('.mute').attr('hidden', true);
+};
+
+const initTexts = () => {
+  const language = getStoredLanguage();
+  const t = getTexts(language || default_lang);
+  $('.sustain legend').text(t.sustain);
+  Object.keys(t.sustains).forEach(index => {
+    $(`.sustain .${index} span`).text(t.sustains[index]);
+  });
+  Object.keys(t.temperaments).forEach(index => {
+    $(`#temperament option[value="${index}"]`)
+      .text(t.temperaments[index]);
+  });
+  Object.keys(t.keys).forEach(index => {
+    $(`#inkey option[value="${index}"]`)
+      .text(t.keys[index]);
+  });
+  $('.label.tone span').text(t.tone);
+  Object.keys(t.tones).forEach(index => {
+    $(`#tone option[value="${index}"]`)
+      .text(t.tones[index]);
+  });
+};
+
+const initKeys = () => {
+  const $keys = notes.map(note => {
+    const $key = $('<button>')
+      .addClass('key')
+      .addClass(note.key.includes('sharp') ? 'black' : 'white')
+      .addClass(note.key)
+      .data('index', note.index.toString())
+      .on('click', (e) => {
+        e.preventDefault();
+        const attacked = !$(e.target).hasClass('active');
+        if (!isSustainOn()) muteAll();
+        if (attacked) dispatch(note.index);
+        else mute(note.index);
+        if (!$('.key.active').length) $('.mute').attr('hidden', true);
+      });
+    const $indicator = $('<code>')
+      .addClass('indicator')
+      .text('0.0');
+    return $key.append($indicator);
+  });
+  $('#keys').append($keys.reverse());
+};
+
+const initLanguageSettingModal = () => {
+  Object.keys(languages).forEach(language => {
+    $('<option>').attr('value', language).text(languages[language].name).appendTo($('#language'));
+  });
+  $('#language').on('change', (e) => {
+    if (isLanguageSet) return;
+    const language = $(e.target).val();
+    switch (language) {
+      case 'ja_en':
+      case 'ja_de':
+      case 'ja_jp':
+        $('.set-language').text('はじめる');
+        break;
+      default:
+        $('.set-language').text('Get Started');
+        break;
+    }
+  });
+  $('.set-language').on('click', (e) => {
+    e.preventDefault();
+    $('.set-language').text('OK');
+    localStorage.setItem('language', getLanguage());
+    isLanguageSet = true;
+    initTexts();
+    $('.modal-language').hide();
+  });
+  $('.open-modal-language').on('click', (e) => {
+    e.preventDefault();
+    $('.modal-language').fadeIn();
+  });
+  if (isLanguageSet) {
+    $('#language').val(getStoredLanguage());
+    $('.set-language').text('OK');
+  } else {
+    $('.modal-language').show();
+  }
+};
+
+const initFooter = () => {
+  $('#temperament,#inkey')
+    .on('change', refreshIndicators);
+  $('#tuningA,#temperament,#inkey,#tone')
+    .on('change', refreshSounds);
+  $('.mute,.sustain,.sustain input')
+    .on('click', muteAll);
+  $('#temperament').on('change', (e) => {
+    const temperament = $(e.target).val();
+    const disabled = temperament === 'equal';
+    $('#inkey').attr('disabled', disabled);
+    $('#inkey-label').css('visibility', disabled ? 'hidden': '');
+  });
+  $('#inkey-label').css('visibility', 'hidden');
+  $('.version small').text(`version ${version}`);
+};
+
+$(() => {
+  initTexts();
+  initKeys();
+  initLanguageSettingModal();
+  initFooter();
+});
+
+const version = '1.0.0';
+</script>
+</body>
+</html>
