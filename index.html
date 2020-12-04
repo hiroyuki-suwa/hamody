@@ -26,6 +26,7 @@ body {
   padding: 0 0 150px;
   background: linear-gradient(to right, #222, #333);
   box-shadow: 0 0 8px 0 rgba(0,0,0,.8);
+  transition: .5s ease-out;
 }
 
 .container .title {
@@ -142,7 +143,7 @@ body {
 .version {
   position: absolute;
   margin: 0;
-  bottom: 120px;
+  bottom: 130px;
   right: 20px;
   z-index: 99;
 }
@@ -153,7 +154,7 @@ body {
 
 .mute {
   position: fixed;
-  bottom: 200px;
+  bottom: 150px;
   left: 50%;
   transform: translate(-50%,0);
   padding: 16px 0;
@@ -166,12 +167,18 @@ body {
   cursor: pointer;
   border-radius: 32px;
   z-index: 999;
+  transition: .5s ease-out;
 }
 .mute:hover {
   background: rgba(0,0,0,.8);
 }
 .mute:focus {
   outline: 0;
+}
+
+.container.tone-settings-expanded + .mute {
+  bottom: 0;
+  transform: translate(-50%,-72px);
 }
 
 .footer {
@@ -189,20 +196,54 @@ body {
 .footer-container {
   display: flexbox;
 }
-.footer .label {
+.footer .temperament-settings .label {
   display: inline-block;
   margin: 8px 12px;
 }
-.footer .label.a {
+.footer .temperament-settings .label.a {
   text-align: right;
 }
-.footer .volume {
+.footer .tone-settings .inharmonicity {
+  display: inline-block;
+  /* height: 40px; */
+  width: 480px;
+  max-width: 100%;
+  margin-bottom: 12px;
+}
+.footer .tone-settings .inharmonicity input#inharmonicity {
+  width: calc(100% - 180px);
+}
+.footer .tone-settings .harmonics {
+  display: flexbox;
+  width: 320px;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto;
+}
+.footer .tone-settings .harmonics label {
+  display: flexbox;
+}
+.footer .tone-settings .harmonics span {
+  display: inline-block;
+  width: 40px;
+  height: 20px;
+  font-size: 12px;
+}
+.footer .tone-settings .harmonics .harmonics-level {
+  width: 240px;
+  height: 4px;
+}
+.footer .tone-settings .harmonics .harmonics-level::-webkit-slider-thumb {
+  width: 14px;
+  height: 14px;
+}
+.footer .master-settings {
   display: flex;
   justify-content: center;
   align-items: center;
   margin: 12px 0;
 }
-select#temperament, select#inkey, input#tuningA, select#tone {
+select#temperament, select#inkey, input#tuningA {
   font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', 'Segoe UI', Geneva, Verdana, sans-serif;
   font-size: 20px;
   font-weight: bold;
@@ -222,11 +263,8 @@ input#tuningA {
   text-align: right;
   width: 72px;
 }
-select#tone {
-  font-size: 16px;
-}
 input#volume {
-  width: calc(100% - 90px);
+  width: calc(100% - 240px);
   max-width: 320px;
 }
 
@@ -257,6 +295,15 @@ input[type="range"]::-webkit-slider-thumb {
 }
 input[type="range"]:active::-webkit-slider-thumb {
   box-shadow: 0 0 0 4px rgba(255, 255, 255, .6);
+}
+
+.setting-pages-switcher {
+  position: absolute;
+  bottom: -8px;
+  left: 8px;
+}
+.setting-pages-switcher .toggle-setting-pages {
+  cursor: pointer;
 }
 
 .language-settings {
@@ -359,6 +406,10 @@ input[type="range"]:active::-webkit-slider-thumb {
     padding: 0 0 60px;
     border-radius: 12px;
   }
+  .container.tone-settings-expanded {
+    /* top: 0; */
+    transform: translate(-50%,-80%) rotate(90deg);
+  }
   .mute {
     position: absolute;
     left: 50%;
@@ -370,17 +421,23 @@ input[type="range"]:active::-webkit-slider-thumb {
     font-size: 40px;
     font-weight: 100;
   }
+  .container.tone-settings-expanded + .mute {
+    transform: translate(-50%, 300px);
+  }
   .footer {
     min-height: 120px;
+  }
+  .footer .tone-settings .harmonics {
+    transform: rotate(270deg) scale(1.25);
+  }
+  .footer .tone-settings .harmonics span {
+    transform: rotate(90deg);
   }
   select#temperament, select#inkey, input#tuningA {
     font-size: 30px;
   }
   input#tuningA {
     width: 108px;
-  }
-  select#tone {
-    font-size: 24px;
   }
   .version {
     bottom: 40px;
@@ -400,25 +457,41 @@ input[type="range"]:active::-webkit-slider-thumb {
 </head>
 
 <body>
-  <div class="container">
-    <h1 class="title">hamody</h1>
-    <fieldset class="sustain">
-      <legend>SUSTAIN MODE:</legend>
-      <label class="on">
-        <span>multiple</span>
-        <input type="radio" name="sustain" value="on" checked>
+<div class="container">
+  <h1 class="title">hamody</h1>
+
+  <fieldset class="sustain">
+    <legend>SUSTAIN MODE:</legend>
+    <label class="on">
+      <span>multiple</span>
+      <input type="radio" name="sustain" value="on" checked>
+    </label>
+    <label class="off">
+      <input type="radio" name="sustain" value="off">
+      <span>single</span>
+    </label>
+  </fieldset>
+
+  <div id="keys" class="keys"></div>
+
+  <p class="version"><small>version X</small></p>
+</div>
+
+<button type="button" class="mute" hidden>mute all</button>
+
+<footer class="footer">
+  <div class="footer-container">
+    <div class="tone-settings">
+      <label class="inharmonicity">
+        <span class="label">inharmonicity:</span>
+        <code class="inharmonicity-value">0.0000</code>
+        <input type="range" id="inharmonicity" min="0.0000" max="0.0100" step="0.0001" value="0.0000">
       </label>
-      <label class="off">
-        <input type="radio" name="sustain" value="off">
-        <span>single</span>
-      </label>
-    </fieldset>
-    <div id="keys" class="keys"></div>
-    <p class="version"><small>version X</small></p>
-  </div>
-  <button type="button" class="mute" hidden>mute all</button>
-  <footer class="footer">
-    <div class="footer-container">
+
+      <div class="harmonics"></div>
+    </div>
+
+    <div class="temperament-settings">
       <span>
         <select id="temperament" name="temperament">
           <option value="equal" selected>Equal</option>
@@ -426,6 +499,7 @@ input[type="range"]:active::-webkit-slider-thumb {
           <option value="meantone">Meantone</option>
           <option value="Pythagorean">Pythagorean</option>
         </select>
+
         <label id="inkey-label" class="label inkey">
           <span>in</span>
           <select id="inkey" name="inkey" disabled>
@@ -445,47 +519,50 @@ input[type="range"]:active::-webkit-slider-thumb {
           </select>
         </label>
       </span>
+    </div>
+
+    <div class="master-settings">
       <label class="label a">
         <span>A =</span>
         <input type="number" id="tuningA" value="442" min="110" max="1760">
         <span>Hz</span>
       </label>
-      <label class="label tone">
-        <span>TONE:</span>
-        <select id="tone" name="tone">
-          <option value="sine">Sine</option>
-          <option value="triangle" selected>Triangle</option>
-          <option value="square">Square</option>
-          <option value="sawtooth">Sawtooth</option>
-        </select>
-      </label>
-      <div class="volume">
-        <span class="material-icons">volume_down</span>
-        <input id="volume" type="range" min="0" max="1" step="0.01" value="0.5">
-        <span class="material-icons">volume_up</span>
-      </div>
-    </div>
-    <p class="language-settings">
-      <a class="open-modal-language material-icons">language</a>
-    </p>
-    <p class="copyright">
-      <small>&copy;2020 SUWAHIROYUKI</small>
-    </p>
-  </footer>
-  <div class="modal modal-language">
-    <div class="modal-container">
-      <h2>Select your language.<br>
-      <small>言語を選択してください</small></h2>
-      <div>
-        <select id="language"></select>  
-      </div>
-      <div>
-        <button class="set-language">Get Started</button>
-      </div>
+
+      <span class="material-icons">volume_down</span>
+      <input id="volume" type="range" min="0" max="1" step="0.001" value="0.10">
+      <span class="material-icons">volume_up</span>
     </div>
   </div>
+
+  <p class="setting-pages-switcher">
+    <a class="toggle-setting-pages material-icons">settings</a>
+  </p>
+
+  <p class="language-settings">
+    <a class="open-modal-language material-icons">language</a>
+  </p>
+
+  <p class="copyright">
+    <small>&copy;2020 SUWAHIROYUKI</small>
+  </p>
+</footer>
+
+<div class="modal modal-language">
+  <div class="modal-container">
+    <h2>Select your language.<br>
+    <small>言語を選択してください</small></h2>
+    <div>
+      <select id="language"></select>  
+    </div>
+    <div>
+      <button class="set-language">Get Started</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const octaves = 3; // Keyboard size (in octave).
+const harmonics = 16; // harmonics size.
 const offsetToTuningNote = 9 + Math.floor(octaves/2) * 12; // Number of keys between lowest note and tuning A.
 const chromaticInterval = 1.0594630943592952645618252949463417007792043174941856285592084314; // 2^(1/12).
 const notesInOctave = ['c', 'c_sharp', 'd', 'd_sharp', 'e', 'f', 'f_sharp', 'g', 'g_sharp', 'a', 'a_sharp', 'h'];
@@ -514,13 +591,6 @@ const en = {
     meantone: 'Meantone',
     Pythagorean: 'Pythagorean',
   },
-  tone: 'TONE:',
-  tones: {
-    sine: 'Sine',
-    triangle: 'Triangle',
-    square: 'Square',
-    sawtooth: 'Sawtooth',
-  }
 };
 const ja = {
   sustain: '音の保持:',
@@ -534,13 +604,6 @@ const ja = {
     meantone: '中全音律',
     Pythagorean: 'ピタゴラス音律',
   },
-  tone: '音色',
-  tones: {
-    sine: '正弦波',
-    triangle: '三角波',
-    square: '矩形波',
-    sawtooth: '鋸歯状波',
-  }
 };
 const en_keys = {
   '0': 'C',
@@ -612,9 +675,16 @@ const getLanguage = () => $('#language').val() || default_lang;
 const getTexts = language => languages[language || getLanguage()];
 const getTuningA = () => parseFloat($('#tuningA').val()) || 442;
 const getKey = () => parseInt($('#inkey').val()) || 0;
-const getTone = () => $('#tone').val() || 'triangle';
 const getCent = index => centList()[(index - getKey() + 12) % 12] || 0;
 const getVolume = () => parseFloat($('#volume').val());
+const getInharmonicity = () => parseFloat($('#inharmonicity').val());
+const getHarmonicsLevels = () => {
+  return new Array(harmonics).fill().map((_, i) => {
+    const level = $('.harmonics-level').filter(`.no${i+1}`).first().val();
+    return parseFloat(level);
+  });
+};
+const frequency = (f, n, b) => n * f * Math.sqrt(1 + b * n * n) / Math.sqrt(1 + b);
 const isSustainOn = () => $('input[name=sustain]:checked').val() === 'on';
 
 let isLanguageSet = !!getStoredLanguage();
@@ -624,51 +694,70 @@ let notes = (new Array(12 * octaves + 1))
   .map((_, index) => {
     const key = notesInOctave[index % 12];
     const relativeFrequency = chromaticInterval ** (index - offsetToTuningNote);
-    return { index, key, relativeFrequency, sound: {} };
+    return { index, key, relativeFrequency, isActive: false, sound: new Array(harmonics).fill({}) };
   });
 
-const createSound = (frequency, cent = 0) => {
-  const context = new (window.AudioContext || window.webkitAudioContext);
-  const oscillator = context.createOscillator();
-  const gain = context.createGain();
-  gain.connect(context.destination);
-  oscillator.connect(gain);
-  oscillator.start = oscillator.start || oscillator.noteOn;
-  oscillator.stop  = oscillator.stop  || oscillator.noteOff;
-  oscillator.type = getTone();
-  oscillator.frequency.value = frequency;
-  oscillator.detune.value = cent;
-  gain.gain.value = getVolume();
-  return { oscillator, gain };
+const createSound = (baseFrequency, cent = 0) => {
+  const b = getInharmonicity();
+  const harmonicsLevels = getHarmonicsLevels();
+  const masterLevel = getVolume();
+  return new Array(harmonics).fill().map((_, i) => {
+    const n = i + 1;
+    const context = new (window.AudioContext || window.webkitAudioContext);
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    gain.connect(context.destination);
+    oscillator.connect(gain);
+    oscillator.start = oscillator.start || oscillator.noteOn;
+    oscillator.stop  = oscillator.stop  || oscillator.noteOff;
+    oscillator.type = 'sine';
+    oscillator.frequency.value = frequency(baseFrequency, n, b);
+    oscillator.detune.value = cent;
+    gain.gain.value = masterLevel * harmonicsLevels[i];
+    return { oscillator, gain };
+  });
 };
 
 const createSoundFor = index => {
-  const frequency = getTuningA() * notes[index].relativeFrequency;
+  const baseFrequency = getTuningA() * notes[index].relativeFrequency;
   const cent = getCent(index);
-  return createSound(frequency, cent);
+  return createSound(baseFrequency, cent);
 };
 
-const updateSound = ({ oscillator, gain }, frequency, cent) => {
-  if (!oscillator || !gain) return createSound(frequency, cent);
-  oscillator.type = getTone();
-  oscillator.frequency.value = frequency;
-  oscillator.detune.value = cent;
-  gain.gain.value = getVolume();
-  return { oscillator, gain };
+const updateSound = (sound, baseFrequency, cent) => {
+  const b = getInharmonicity();
+  const harmonicsLevels = getHarmonicsLevels();
+  const masterLevel = getVolume();
+  return sound.map(({oscillator, gain}, i) => {
+    if (!oscillator || !gain) {
+      const context = new (window.AudioContext || window.webkitAudioContext);
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      gain.connect(context.destination);
+      oscillator.connect(gain);
+      oscillator.start = oscillator.start || oscillator.noteOn;
+      oscillator.stop  = oscillator.stop  || oscillator.noteOff;
+      oscillator.type = 'sine';
+    };
+    const n = i + 1;
+    oscillator.frequency.value = frequency(baseFrequency, n, b);
+    oscillator.detune.value = cent;
+    gain.gain.value = masterLevel * harmonicsLevels[i];
+    return { oscillator, gain };
+  });
 };
 
-const updateSoundFor = ({ oscillator, gain }, index) => {
-  const frequency = getTuningA() * notes[index].relativeFrequency;
+const updateSoundFor = (sound, index) => {
+  const baseFrequency = getTuningA() * notes[index].relativeFrequency;
   const cent = getCent(index);
-  return updateSound({ oscillator, gain }, frequency, cent);
+  return updateSound(sound, baseFrequency, cent);
 };
 
 const refreshSounds = () => {
   notes = notes.map((note, index) => {
-    if (note.sound.oscillator && note.sound.gain) {
-      note.sound = updateSoundFor(note.sound, index);
-    }
-    return note;
+    if (!note.isActive) return note;
+    const sound = updateSoundFor(note.sound, index);
+    return { ...note, sound };
   });
 };
 
@@ -683,11 +772,13 @@ const refreshIndicators = () => {
 };
 
 const mute = index => {
-  const { oscillator, gain } = notes[index].sound;
-  if (!oscillator || !gain) return;
-  oscillator.stop();
-  notes[index].sound = {};
-
+  if (notes[index].isActive) {
+    notes[index].sound.forEach(({ oscillator, gain }) => {
+      if (oscillator) oscillator.stop();
+    });
+    notes[index].sound = new Array(harmonics).fill({});
+    notes[index].isActive = false;
+  }
   $('.key').each(function() {
     if (parseInt($(this).data('index')) === index)
       $(this).removeClass('active');
@@ -697,8 +788,11 @@ const mute = index => {
 const dispatch = index => {
   mute(index);
   const sound = createSoundFor(index);
+  sound.forEach(({oscillator}) => {
+    if (oscillator) oscillator.start();
+  });
   notes[index].sound = sound;
-  sound.oscillator.start();
+  notes[index].isActive = true;
   $('.key').each(function() {
     if (parseInt($(this).data('index')) === index)
       $(this).addClass('active');
@@ -707,8 +801,8 @@ const dispatch = index => {
 };
 
 const muteAll = () => {
-  notes.forEach((_, index) => {
-    mute(index);
+  notes.forEach((note, index) => {
+    if (note.isActive) mute(index);
   });
   $('.mute').attr('hidden', true);
 };
@@ -728,12 +822,13 @@ const initTexts = () => {
     $(`#inkey option[value="${index}"]`)
       .text(t.keys[index]);
   });
-  $('.label.tone span').text(t.tone);
-  Object.keys(t.tones).forEach(index => {
-    $(`#tone option[value="${index}"]`)
-      .text(t.tones[index]);
-  });
 };
+
+const refreshInharmonicityValue = (e) => {
+  const value = $(e.target).val();
+  const text = value ? (value + '0000').slice(0,6): '0.0000';
+  $('.inharmonicity-value').text(text);
+}
 
 const initKeys = () => {
   const $keys = notes.map(note => {
@@ -797,12 +892,30 @@ const initLanguageSettingModal = () => {
 };
 
 const initFooter = () => {
+  const $harmonics = $('.harmonics');
+  Array(harmonics).fill().forEach((_, i) => {
+    const $label = $('<label>');
+    const $span = $('<span>').text(i+1);
+    const $input = $('<input>')
+      .addClass('harmonics-level')
+      .addClass(`no${i + 1}`)
+      .attr('type', 'range')
+      .attr('min', 0)
+      .attr('max', 1)
+      .attr('step', 0.01)
+      .val(1 / (i + 1));
+    $harmonics.append(
+      $label.append($span).append($input)
+    );
+  });
   $('#temperament,#inkey')
     .on('change', refreshIndicators);
-  $('#temperament,#inkey,#tone')
+  $('#temperament,#inkey')
     .on('change', refreshSounds);
-  $('#tuningA,#volume')
+  $('#tuningA,#volume,#inharmonicity,.harmonics-level')
     .on('input', refreshSounds);
+  $('#inharmonicity')
+    .on('input', refreshInharmonicityValue);
   $('.mute,.sustain,.sustain input')
     .on('click', muteAll);
   $('#temperament').on('change', (e) => {
@@ -812,6 +925,11 @@ const initFooter = () => {
     $('#inkey-label').css('visibility', disabled ? 'hidden': '');
   });
   $('#inkey-label').css('visibility', 'hidden');
+  $('.tone-settings').hide();
+  $('.toggle-setting-pages').on('click', () => {
+    $('.tone-settings').slideToggle();
+    $('.container').toggleClass('tone-settings-expanded')
+  });
   $('.version small').text(`version ${version}`);
 };
 
@@ -822,7 +940,7 @@ $(() => {
   initFooter();
 });
 
-const version = '1.1.0';
+const version = '1.2.0';
 </script>
 </body>
 </html>
