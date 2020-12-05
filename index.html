@@ -195,10 +195,6 @@ body {
 .footer-container {
   display: flexbox;
 }
-.footer .temperament-settings .label {
-  display: inline-block;
-  margin: 8px 12px;
-}
 .footer .tone-settings .inharmonicity {
   display: inline-block;
   width: 480px;
@@ -232,6 +228,13 @@ body {
   width: 14px;
   height: 14px;
 }
+.footer .temperament-settings * {
+  transition: .5s ease-out;
+}
+.footer .temperament-settings .label {
+  display: inline-block;
+  margin: 8px 12px;
+}
 .footer .master-settings {
   display: flex;
   justify-content: center;
@@ -244,6 +247,10 @@ body {
 }
 .footer .master-settings .label.a span {
   padding: 0 4px;
+}
+
+.container.tone-settings-expanded + * + * .temperament-settings * {
+  opacity: 0;
 }
 
 select#temperament, select#inkey, input#tuningA {
@@ -414,16 +421,17 @@ input[type="range"]:active::-webkit-slider-thumb {
   .mute {
     position: absolute;
     left: 50%;
-    top: 50%;
+    bottom: 50%;
     width: 1024px;
     height: 80px;
     border-radius: 40px;
-    transform: translate(-50%, calc(-58% + 150px));
     font-size: 40px;
     font-weight: 100;
+    transition: .5s ease-out;
+    transform: translate(-50%, calc(-58% + 270px));
   }
   .container.tone-settings-expanded + .mute {
-    transform: translate(-50%, 300px);
+    bottom: 20px;
   }
   .footer {
     min-height: 120px;
