@@ -175,7 +175,6 @@ body {
 .mute:focus {
   outline: 0;
 }
-
 .container.tone-settings-expanded + .mute {
   bottom: 0;
   transform: translate(-50%,-72px);
@@ -200,12 +199,8 @@ body {
   display: inline-block;
   margin: 8px 12px;
 }
-.footer .temperament-settings .label.a {
-  text-align: right;
-}
 .footer .tone-settings .inharmonicity {
   display: inline-block;
-  /* height: 40px; */
   width: 480px;
   max-width: 100%;
   margin-bottom: 12px;
@@ -243,6 +238,14 @@ body {
   align-items: center;
   margin: 12px 0;
 }
+.footer .master-settings .label.a {
+  display: flex;
+  align-items: center;
+}
+.footer .master-settings .label.a span {
+  padding: 0 4px;
+}
+
 select#temperament, select#inkey, input#tuningA {
   font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', 'Segoe UI', Geneva, Verdana, sans-serif;
   font-size: 20px;
@@ -267,7 +270,6 @@ input#volume {
   width: calc(100% - 240px);
   max-width: 320px;
 }
-
 input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
@@ -407,7 +409,6 @@ input[type="range"]:active::-webkit-slider-thumb {
     border-radius: 12px;
   }
   .container.tone-settings-expanded {
-    /* top: 0; */
     transform: translate(-50%,-80%) rotate(90deg);
   }
   .mute {
@@ -484,8 +485,8 @@ input[type="range"]:active::-webkit-slider-thumb {
     <div class="tone-settings">
       <label class="inharmonicity">
         <span class="label">inharmonicity:</span>
-        <code class="inharmonicity-value">0.0000</code>
-        <input type="range" id="inharmonicity" min="0.0000" max="0.0100" step="0.0001" value="0.0000">
+        <code class="inharmonicity-value">0.00000</code>
+        <input type="range" id="inharmonicity" min="0.00000" max="0.00500" step="0.00001" value="0.00000">
       </label>
 
       <div class="harmonics"></div>
@@ -686,24 +687,24 @@ const getHarmonicsLevels = () => {
 };
 const frequency = (f, n, b) => n * f * Math.sqrt(1 + b * n * n) / Math.sqrt(1 + b);
 const isSustainOn = () => $('input[name=sustain]:checked').val() === 'on';
-
 let isLanguageSet = !!getStoredLanguage();
-
+let context;
 let notes = (new Array(12 * octaves + 1))
   .fill()
   .map((_, index) => {
     const key = notesInOctave[index % 12];
     const relativeFrequency = chromaticInterval ** (index - offsetToTuningNote);
-    return { index, key, relativeFrequency, isActive: false, sound: new Array(harmonics).fill({}) };
+    const sound = new Array(harmonics).fill({});
+    const isActive = false;
+    return {index, key, relativeFrequency, sound, isActive };
   });
 
-const createSound = (baseFrequency, cent = 0) => {
+const createSound = (index, baseFrequency, cent = 0) => {
   const b = getInharmonicity();
   const harmonicsLevels = getHarmonicsLevels();
   const masterLevel = getVolume();
-  return new Array(harmonics).fill().map((_, i) => {
+  return notes[index].sound.map((_, i) => {
     const n = i + 1;
-    const context = new (window.AudioContext || window.webkitAudioContext);
     const oscillator = context.createOscillator();
     const gain = context.createGain();
     gain.connect(context.destination);
@@ -721,29 +722,19 @@ const createSound = (baseFrequency, cent = 0) => {
 const createSoundFor = index => {
   const baseFrequency = getTuningA() * notes[index].relativeFrequency;
   const cent = getCent(index);
-  return createSound(baseFrequency, cent);
+  return createSound(index, baseFrequency, cent);
 };
 
 const updateSound = (sound, baseFrequency, cent) => {
   const b = getInharmonicity();
   const harmonicsLevels = getHarmonicsLevels();
   const masterLevel = getVolume();
-  return sound.map(({oscillator, gain}, i) => {
-    if (!oscillator || !gain) {
-      const context = new (window.AudioContext || window.webkitAudioContext);
-      const oscillator = context.createOscillator();
-      const gain = context.createGain();
-      gain.connect(context.destination);
-      oscillator.connect(gain);
-      oscillator.start = oscillator.start || oscillator.noteOn;
-      oscillator.stop  = oscillator.stop  || oscillator.noteOff;
-      oscillator.type = 'sine';
-    };
+  return sound.map(({context, oscillator, gain}, i) => {
     const n = i + 1;
     oscillator.frequency.value = frequency(baseFrequency, n, b);
     oscillator.detune.value = cent;
     gain.gain.value = masterLevel * harmonicsLevels[i];
-    return { oscillator, gain };
+    return { context, oscillator, gain };
   });
 };
 
@@ -773,10 +764,10 @@ const refreshIndicators = () => {
 
 const mute = index => {
   if (notes[index].isActive) {
-    notes[index].sound.forEach(({ oscillator, gain }) => {
+    notes[index].sound = notes[index].sound.map(({ oscillator }) => {
       if (oscillator) oscillator.stop();
+      return {}
     });
-    notes[index].sound = new Array(harmonics).fill({});
     notes[index].isActive = false;
   }
   $('.key').each(function() {
@@ -786,6 +777,9 @@ const mute = index => {
 };
 
 const dispatch = index => {
+  if (!context) {
+    context = new (window.AudioContext || window.webkitAudioContext);
+  }
   mute(index);
   const sound = createSoundFor(index);
   sound.forEach(({oscillator}) => {
@@ -825,8 +819,8 @@ const initTexts = () => {
 };
 
 const refreshInharmonicityValue = (e) => {
-  const value = $(e.target).val();
-  const text = value ? (value + '0000').slice(0,6): '0.0000';
+  const value = parseFloat($(e.target).val());
+  const text = value ? (value + '00000').slice(0,7) : '0.00000';
   $('.inharmonicity-value').text(text);
 }
 
@@ -895,15 +889,15 @@ const initFooter = () => {
   const $harmonics = $('.harmonics');
   Array(harmonics).fill().forEach((_, i) => {
     const $label = $('<label>');
-    const $span = $('<span>').text(i+1);
+    const $span = $('<span>').text(i + 1);
     const $input = $('<input>')
       .addClass('harmonics-level')
       .addClass(`no${i + 1}`)
       .attr('type', 'range')
       .attr('min', 0)
       .attr('max', 1)
-      .attr('step', 0.01)
-      .val(1 / (i + 1));
+      .attr('step', 0.001)
+      .val(.5 / (i + 1) / (i + 1));
     $harmonics.append(
       $label.append($span).append($input)
     );
