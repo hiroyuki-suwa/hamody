@@ -12,15 +12,15 @@ It is also ideal for music education, ear training, composition, and teaching, a
 
 ![screenshot](hamody.png)
 
-# Live Demo
+## Live Demo
 
 https://storage.googleapis.com/hamody/index.html
 
-# License
+## License
 
 [MIT License](LICENSE)
 
-# Author
+## Author
 
 &copy;2020 諏訪宏幸 / SUWA Hiroyuki  
 https://github.com/hiroyuki-suwa/
