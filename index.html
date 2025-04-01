@@ -693,7 +693,10 @@ const getHarmonicsLevels = () => {
     return parseFloat(level);
   });
 };
-const frequency = (f, n, b) => n * f * Math.sqrt(1 + b * n * n) / Math.sqrt(1 + b);
+const frequency = (f, n) => {
+  const b = getInharmonicity();
+  return n * f * Math.sqrt(1 + b * n * n) / Math.sqrt(1 + b);
+}
 const isSustainOn = () => $('input[name=sustain]:checked').val() === 'on';
 let isLanguageSet = !!getStoredLanguage();
 let context;
@@ -707,11 +710,10 @@ let notes = (new Array(12 * octaves + 1))
     return {index, key, relativeFrequency, sound, isActive };
   });
 
-const createSound = (index, baseFrequency, cent = 0) => {
-  const b = getInharmonicity();
+const createSound = (baseFrequency, cent = 0) => {
   const harmonicsLevels = getHarmonicsLevels();
   const masterLevel = getVolume();
-  return notes[index].sound.map((_, i) => {
+  return new Array(harmonics).fill().map((_, i) => {
     const n = i + 1;
     const oscillator = context.createOscillator();
     const gain = context.createGain();
@@ -720,7 +722,7 @@ const createSound = (index, baseFrequency, cent = 0) => {
     oscillator.start = oscillator.start || oscillator.noteOn;
     oscillator.stop  = oscillator.stop  || oscillator.noteOff;
     oscillator.type = 'sine';
-    oscillator.frequency.value = frequency(baseFrequency, n, b);
+    oscillator.frequency.value = frequency(baseFrequency, n);
     oscillator.detune.value = cent;
     gain.gain.value = masterLevel * harmonicsLevels[i];
     return { oscillator, gain };
@@ -730,19 +732,18 @@ const createSound = (index, baseFrequency, cent = 0) => {
 const createSoundFor = index => {
   const baseFrequency = getTuningA() * notes[index].relativeFrequency;
   const cent = getCent(index);
-  return createSound(index, baseFrequency, cent);
+  return createSound(baseFrequency, cent);
 };
 
 const updateSound = (sound, baseFrequency, cent) => {
-  const b = getInharmonicity();
   const harmonicsLevels = getHarmonicsLevels();
   const masterLevel = getVolume();
-  return sound.map(({context, oscillator, gain}, i) => {
+  return sound.map(({ oscillator, gain }, i) => {
     const n = i + 1;
-    oscillator.frequency.value = frequency(baseFrequency, n, b);
+    oscillator.frequency.value = frequency(baseFrequency, n);
     oscillator.detune.value = cent;
     gain.gain.value = masterLevel * harmonicsLevels[i];
-    return { context, oscillator, gain };
+    return { oscillator, gain };
   });
 };
 
@@ -910,14 +911,21 @@ const initFooter = () => {
       $label.append($span).append($input)
     );
   });
-  $('#temperament,#inkey')
-    .on('change', refreshIndicators);
-  $('#temperament,#inkey')
-    .on('change', refreshSounds);
-  $('#tuningA,#volume,#inharmonicity,.harmonics-level')
-    .on('input', refreshSounds);
-  $('#inharmonicity')
-    .on('input', refreshInharmonicityValue);
+  $('#temperament,#inkey').on({
+    input: refreshIndicators,
+    change: refreshIndicators,
+    blur: refreshIndicators,
+  });
+  $('#temperament,#inkey,#tuningA,#volume,#inharmonicity,.harmonics-level').on({
+    input: refreshSounds,
+    change: refreshSounds,
+    blur: refreshSounds,
+  });
+  $('#inharmonicity').on({
+    input: refreshInharmonicityValue,
+    change: refreshInharmonicityValue,
+    blur: refreshInharmonicityValue,
+  });
   $('.mute,.sustain,.sustain input')
     .on('click', muteAll);
   $('#temperament').on('change', (e) => {
